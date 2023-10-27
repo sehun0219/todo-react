@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 
 /* function ToDoList() {
   const [toDo, setTodo] = useState("");
@@ -29,12 +29,43 @@ import { useForm } from "react-hook-form";
   );
 } */
 
+interface IForm {
+  email: string;
+  firstName: string;
+  lastName: string;
+  userName: string;
+  password: string;
+  password1: string;
+  extraError?: string;
+}
+
 function ToDoList() {
-  const { register, handleSubmit, formState } = useForm();
-  const onValid = (data: any) => {
-    console.log(data);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm<IForm>({
+    defaultValues: {
+      email: "@naver.com",
+      firstName: "",
+      lastName: "",
+      userName: "",
+      password: "",
+      password1: "",
+    },
+  });
+  const onValid = (data: IForm) => {
+    if (data.password !== data.password1) {
+      setError(
+        "password1",
+        { message: "Password not match" },
+        { shouldFocus: true }
+      );
+    }
+    //setError("extraError", { message: "Extra Error" });
   };
-  console.log(formState.errors);
+  console.log(errors);
 
   return (
     <div>
@@ -42,23 +73,54 @@ function ToDoList() {
         style={{ display: "flex", flexDirection: "column" }}
         onSubmit={handleSubmit(onValid)}
       >
-        <input {...register("email", { required: true })} placeholder="Email" />
         <input
-          {...register("firstName", { required: true })}
+          {...register("email", {
+            required: "Email is required",
+            pattern: {
+              value: /^[A-Za-z0-9._%+-]+@naver.com$/,
+              message: "Only naver.com is allowed.",
+            },
+          })}
+          placeholder="Email"
+        />
+        <span>{errors?.email?.message as string}</span>
+        <input
+          {...register("firstName", { required: "required!!" })}
           placeholder="First Name"
         />
+        <span>{errors?.firstName?.message as string}</span>
         <input
-          {...register("lastName", { required: true })}
+          {...register("lastName", {
+            required: "required!!",
+            validate: {
+              noNumber1: (value) =>
+                value.includes("1") ? "can't include 1" : true,
+              noSehun: (value) =>
+                value.includes("sehun") ? "can't include sehun" : true,
+            },
+          })}
           placeholder="Last Name"
         />
+        <span>{errors?.lastName?.message as string}</span>
         <input
-          {...register("userName", { required: true, minLength: 5 })}
+          {...register("userName", {
+            required: "required!!",
+            minLength: { value: 5, message: "longer than 5 char" },
+          })}
           placeholder="UserName"
         />
+        <span>{errors?.userName?.message as string}</span>
         <input
-          {...register("password", { required: true, minLength: 5 })}
+          {...register("password", {
+            required: "required!!",
+            minLength: {
+              value: 5,
+              message: "Password should be longer than 5 chars.",
+            },
+          })}
           placeholder="Password"
         />
+        <span>{errors?.password?.message as string}</span>
         <input
           {...register("password1", {
             required: "Password is required",
@@ -69,7 +131,9 @@ function ToDoList() {
           })}
           placeholder="Password1"
         />
+        <span>{errors?.password1?.message as string}</span>
         <button>Add</button>
+        <span>{errors?.extraError?.message as string}</span>
       </form>
     </div>
   );
